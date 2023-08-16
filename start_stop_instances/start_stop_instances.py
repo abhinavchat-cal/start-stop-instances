@@ -4,7 +4,8 @@ import boto3
 from botocore.exceptions import WaiterError
 from dotenv import load_dotenv
 import os
-from tabulate import tabulate
+from rich.console import Console
+from rich.table import Table
 
 # Get the path to the directory containing this script
 script_directory = Path(__file__).resolve().parent.parent
@@ -26,9 +27,9 @@ def wait_for_instance_state(ec2, instance_id, desired_state):
     try:
         waiter = ec2.get_waiter(f"instance_{desired_state}")
         waiter.wait(InstanceIds=[instance_id])
-        typer.echo(f"Instance is {desired_state}!")
+        typer.secho(f"Instance is {desired_state}!", fg=typer.colors.BRIGHT_GREEN)
     except WaiterError:
-        typer.echo(f"Failed to {desired_state} instance.")
+        typer.secho(f"Failed to {desired_state} instance.", fg=typer.colors.BRIGHT_RED)
 
 
 @app.command()
@@ -64,22 +65,24 @@ def show_instances():
             ]
 
             if len(_instance_ids) == len(_instance_names) == len(_instance_states):
-                _instance_metadata = [
-                    [id, name, state]
-                    for id, name, state in zip(
-                        _instance_ids, _instance_names, _instance_states
-                    )
-                ]
-                headers = ["InstanceId", "InstanceName", "InstanceState"]
-                table = tabulate(_instance_metadata, headers=headers, tablefmt="grid")
-                typer.echo(table)
+                console = Console()
+                table = Table("InstanceId", "InstanceName", "InstanceState")
+                for id, name, state in zip(
+                    _instance_ids, _instance_names, _instance_states
+                ):
+                    table.add_row(id, name, state)
+
+                console.print(table)
         else:
-            typer.echo("No instances configured for this account.")
+            typer.secho(
+                "No instances configured for this account.", fg=typer.colors.MAGENTA
+            )
             return
     except Exception as e:
         print(str(e))
-        typer.echo(
-            "AWS credentials are not configured. Please configure them using AWS CLI or environment variables."
+        typer.secho(
+            "AWS credentials are not configured. Please configure them using AWS CLI or environment variables.",
+            fg=typer.colors.BRIGHT_RED,
         )
         return
 
@@ -99,26 +102,36 @@ def start_stop(instance_id: str):
     )
 
     # Prompt for action
-    action = typer.prompt("Enter 'start' or 'stop' to perform the action")
+    action = typer.prompt(
+        "Enter 'start' or 'stop' to perform the action", default="stop"
+    )
 
     # Perform action
     if action == "start":
         response = ec2.start_instances(InstanceIds=[instance_id])
-        typer.echo(f"Starting instance {instance_id}...")
+        typer.secho(f"Starting instance {instance_id}...", fg=typer.colors.BRIGHT_GREEN)
         wait_for_instance_state(ec2, instance_id, "running")
         # Describe instance to get public IP address
         instance_description = ec2.describe_instances(InstanceIds=[instance_id])
         public_ip = instance_description["Reservations"][0]["Instances"][0][
             "PublicIpAddress"
         ]
-        typer.echo(f"Public IP address: {public_ip}")
+        message = "Public IP address: " + typer.style(
+            public_ip, fg=typer.colors.GREEN, bold=True
+        )
+        typer.echo(message)
     elif action == "stop":
         response = ec2.stop_instances(InstanceIds=[instance_id])
         typer.echo(f"Stopping instance {instance_id}...")
         wait_for_instance_state(ec2, instance_id, "stopped")
-        typer.echo(f"Instance {instance_id} stopped successfully")
+        message = (
+            "Instance "
+            + typer.style(instance_id, fg=typer.colors.GREEN, bold=True)
+            + " stopped successfully"
+        )
+        typer.echo(message)
     else:
-        typer.echo("Invalid action. Use 'start' or 'stop'")
+        typer.secho("Invalid action. Use 'start' or 'stop'", fg=typer.colors.BRIGHT_RED)
 
 
 @app.command()
@@ -142,7 +155,10 @@ def show_instance_ip(instance_id: str):
     try:
         response = ec2.describe_instances(InstanceIds=[instance_id])
         public_ip = response["Reservations"][0]["Instances"][0]["PublicIpAddress"]
-        typer.echo(f"Public IP address: {public_ip}")
+        message = "Public IP address: " + typer.style(
+            public_ip, fg=typer.colors.GREEN, bold=True
+        )
+        typer.echo(message)
     except Exception as e:
         print(str(e))
         typer.echo(
