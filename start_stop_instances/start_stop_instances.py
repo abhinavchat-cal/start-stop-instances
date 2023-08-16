@@ -31,7 +31,8 @@ def main(instance_id: str):
     # Load AWS credentials from environment variables
     aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
     aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-    aws_session_token = os.getenv("AWS_SESSION_TOKEN")
+    # DEPRECATED:: aws_session_token
+    # aws_session_token = os.getenv("AWS_SESSION_TOKEN")
     aws_region = os.getenv("AWS_DEFAULT_REGION")
 
     # print(aws_access_key_id)
@@ -41,7 +42,7 @@ def main(instance_id: str):
         "ec2",
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,
-        aws_session_token=aws_session_token,
+        # aws_session_token=aws_session_token,
         region_name=aws_region,
     )
 
