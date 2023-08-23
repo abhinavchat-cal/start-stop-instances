@@ -35,7 +35,7 @@ def wait_for_instance_state(ec2, instance_id, desired_state):
 @app.command()
 def show_instances():
     """
-    Display all EC2 instances. Show Instance Id, Instance Name and Instance Status
+    Display all EC2 instances. Show Instance Id, Instance Name and Instance Status.
     """
 
     # Create an EC2 client
@@ -81,7 +81,8 @@ def show_instances():
     except Exception as e:
         print(str(e))
         typer.secho(
-            "AWS credentials are not configured. Please configure them using AWS CLI or environment variables.",
+            "AWS credentials are not configured. Please configure them using AWS CLI\
+                  or environment variables.",
             fg=typer.colors.BRIGHT_RED,
         )
         return
@@ -108,7 +109,7 @@ def start_stop(instance_id: str):
 
     # Perform action
     if action == "start":
-        response = ec2.start_instances(InstanceIds=[instance_id])
+        ec2.start_instances(InstanceIds=[instance_id])
         typer.secho(f"Starting instance {instance_id}...", fg=typer.colors.BRIGHT_GREEN)
         wait_for_instance_state(ec2, instance_id, "running")
         # Describe instance to get public IP address
@@ -121,7 +122,7 @@ def start_stop(instance_id: str):
         )
         typer.echo(message)
     elif action == "stop":
-        response = ec2.stop_instances(InstanceIds=[instance_id])
+        ec2.stop_instances(InstanceIds=[instance_id])
         typer.echo(f"Stopping instance {instance_id}...")
         wait_for_instance_state(ec2, instance_id, "stopped")
         message = (
@@ -162,7 +163,8 @@ def show_instance_ip(instance_id: str):
     except Exception as e:
         print(str(e))
         typer.echo(
-            "AWS credentials are not configured. Please configure them using AWS CLI or environment variables."
+            "AWS credentials are not configured. Please configure them using AWS CLI\
+                  or environment variables."
         )
         return
 
